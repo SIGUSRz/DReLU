@@ -1,2 +1,2 @@
 # DReLU
-Dynamic ReLU
+Dynamic ReLU Project

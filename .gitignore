@@ -1,4 +1,6 @@
-Datasets/
-*.[oa]
-*.[pyc]
-*.[swp]
+Datasets/cifar-10/
+Datasets/mnist/
+*.o
+*.pyc
+*.swp
+.ipynb_checkpoints/
