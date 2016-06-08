@@ -2,6 +2,7 @@ import cPickle as pickle
 import struct 
 import numpy as np
 import os
+import mxnet as mx
 def _load_cifar_data(data_dir):
     if not os.path.exists('Datasets'):
         os.system('mkdir Datasets/')
@@ -20,7 +21,7 @@ def load_CIFAR10_batch(filename):
         datadict = pickle.load(file)
         X = datadict['data']
         Y = datadict['labels']
-        X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float")
+        X = X.reshape(10000, 3, 32, 32).astype("float")
         Y = np.array(Y)
         return X, Y
 

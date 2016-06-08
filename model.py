@@ -1,51 +1,74 @@
 import mxnet as mx
 import numpy as np
+from layers import *
+import log
+import argparse
+import sys
 
-def get_accuracy(output, label):
-    error = np.minimum(1, np.absolute(output-label))
-    error = np.sum(error)
-    accuracy = 1 - error/output.shape[0]
-    return accuracy
-
-def print_epoch(epoch, symbol, arguments, state):
-    print 'Epoch ' + str(epoch)
-
-def fully_connected(inputs, hidden_size, activation=True):
-    if activation:
-        return relu(mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size)
+def build_model(model_name='mlp',device=mx.cpu(),num_epoch=20,batch_size=128,initializer='Xavier',optimizer='sgd',lr=0.01,use_drelu='False'):
+    model_argument = {}
+    model_argument['epoch_size'] = 60000 / batch_size
+    if model_name  == 'mlp':
+        return build_mlp(device,num_epoch,optimizer,lr,use_drelu,model_argument)
     else:
-        return mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size)
+        print 'no'
+        
+def train_model(net, train_data=(None,None),eval_data=(None,None),batch_size=128,batch_callback=None,kvstore='local',save_model_path=None,top_accuracy=1):
+    kv = mx.kvstore.create(kvstore)
+    head = '%(asctime)-15s Node[' + str(kv.rank) + '] %(message)s'
+    logger = log.build_logger()
+    evaluation_matrix = ['accuracy']
+    if top_accuracy > 1:
+        evaluation_matrix.append(mx.metric.create('top_k_accuracy', top_k=top_accuracy))
+    if batch_callback == None:
+        batch_callback = []
+    else:
+        batch_callback.append(mx.callback.Speedometer(batch_size,50))
+        print batch_callback
+    if save_model_path == None:
+        epoch_callback = epoch_nonsave_callback
+    else:
+        pass
+    return net.fit(
+            X=train_data[0],
+            y=train_data[1],
+            eval_data=eval_data,
+            kvstore=kv,
+            batch_end_callback=batch_callback,
+            epoch_end_callback=epoch_callback)
 
-def convLayer(inputs, filter_size, stride, pad, filters):
-    conv = mx.symbol.Convolution(data=inputs, kernel=filter_size, stride=stride, pad=pad, num_filter=filters)
-    layer = mx.symbol.Activation(data=conv, act_type='relu')
-    return layer
+def epoch_nonsave_callback(epoch, sybol, arg, aux):
+    dic = {}
+    #print arg
+    for key in arg:
+        if 'activation' in key:
+            if key.split('_')[0] in dic:
+                d[key.split('_')[0]].append(arg[key].asnumpy())
+            else:
+                d[key.split('_')[0]] = [arg[key].asnumpy()[0]]
+    for key in dic:
+        print '%s %f %f' % (key, d[key][0], d[key][1])
 
-def maxPoolLayer(inputs, filter_size, stride, pad):
-    return mx.symbol.Pooling(data=inputs, kernel=filter_size, stride=stride, pad=pad, pool_type='max')
-
-def avgPoolLayer(inputs, filter_size, stride, pad):
-    return mx.symbol.Pooling(data=inputs, kernel=filter_size, stride=stride, pad=pad, pool_type='avg')
-
-def dropout(inputs, rate):
-    return mx.symbol.Dropout(data=inputs,p=rate)
-
-def softmax(inputs):
-    return mx.symbol.SoftmaxOutput(data=inputs, name='softmax')
-
-def relu(inputs):
-    return mx.symbol.Activation(data=inputs, act_type='relu')
-
-def build_vanilla_nn(use_drelu='False'):
+def build_mlp(device,num_epoch,optimizer,lr,use_drelu,model_argument):
     data = mx.symbol.Variable('data')
     if use_drelu:
-        pass
+        fc1 = fully_connected(data,256)
+        fc2 = fully_connected(fc1, 64)
+        fc3 = fully_connected(fc2, 10, activation=False)
+        output = softmax(fc3)
     else:
         fc1 = fully_connected(data,256)
         fc2 = fully_connected(fc1, 64)
         fc3 = fully_connected(fc2, 10, activation=False)
         output = softmax(fc3)
-
+    return mx.model.FeedForward(
+        symbol=output, 
+        ctx=device,
+        optimizer=optimizer,
+        initializer=mx.init.Xavier(factor_type='in',magnitude=2.34),
+        num_epoch=num_epoch,
+        learning_rate=lr,
+        **model_argument)
 def build_nin(features=None,labels=None,num_train=None,device=mx.cpu(),epoch=100,lr=0.01,optimizer='adam'):
     data = mx.symbol.Variable('data')
     conv1_1 = convLayer(data,filter_size=(5,5),stride=(1,1),pad=(2,2),filters=192)
@@ -65,3 +88,7 @@ def build_nin(features=None,labels=None,num_train=None,device=mx.cpu(),epoch=100
     output = softmax(output, name='softmax') 
     model = mx.model.FeedForward.create(output, X=features,y=labels,num_epoch=epoch,ctx=device,learning_rate=lr,optimizer=optimizer,epoch_end_callback=print_epoch)
     return model
+def parse_args():
+    parser = argparse.ArgumentParser(description='Passing Arguments to Build Model')
+    parser.add_argument('--network', type=str,default='mlp',help= 'The Network to Use')
+    return parser.parse_args(sys.argv[len(sys.argv):])
