@@ -1,9 +1,8 @@
 import logging
 import sys
 
-def build_logger():
+def build_logger(head):
     reload(logging)
+    logging.basicConfig(level=logging.DEBUG, format=head)
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
     return logger

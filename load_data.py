@@ -61,7 +61,8 @@ def _load_mnist_data(data_dir):
             print 'Done Extraction ' + target
             os.system('rm ' + target)
         else:
-            print target + ' exits'
+            
+            print target + '.pkl exits'
         labelflag = not labelflag
     os.chdir('..')
     os.chdir('..')
@@ -103,3 +104,41 @@ def load_MNIST(filepath):
     test_x = pickle.load(open(os.path.join(filepath,'t10k-images-idx3-ubyte.pkl'),'rb'))
     test_y = pickle.load(open(os.path.join(filepath,'t10k-labels-idx1-ubyte.pkl'),'rb'))
     return train_x, train_y, test_x, test_y
+
+def get_MNIST_dataset(data_dir,kv,batch_size,data_shape):
+    if not os.path.isdir('Datasets'):
+        os.system('mkdir Datasets/')
+    if not os.path.isdir(data_dir):
+        os.system("mkdir " + data_dir)
+    os.chdir(data_dir)
+    labelflag=False
+    for target in ['train-images-idx3-ubyte', 'train-labels-idx1-ubyte', 't10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte']:
+        if (not os.path.exists(target)):
+            os.system('wget http://webdocs.cs.ualberta.ca/~bx3/data/mnist.zip')
+            os.system('unzip -u mnist.zip; rm mnist.zip')
+            print 'Done Download'
+            break
+        else:
+            print target + ' exists'
+    os.chdir('..')
+    os.chdir('..')
+    flat = False if len(data_shape) == 3 else True
+    train = mx.io.MNISTIter(
+        image = data_dir + 'train-images-idx3-ubyte',
+        label = data_dir + 'train-labels-idx1-ubyte',
+        input_shape = data_shape,
+        batch_size = batch_size,
+        shuffle = True,
+        flat = flat,
+        num_parts = kv.num_workers,
+        part_index = kv.rank)
+    validation = mx.io.MNISTIter(
+        image = data_dir + 't10k-images-idx3-ubyte',
+        label = data_dir + 't10k-labels-idx1-ubyte',
+        input_shape = data_shape,
+        batch_size = batch_size,
+        shuffle = True,
+        flat = flat,
+        num_parts = kv.num_workers,
+        part_index = kv.rank)
+    return (train, validation)

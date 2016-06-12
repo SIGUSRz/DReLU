@@ -1,5 +1,6 @@
 import mxnet as mx
 import numpy as np
+import drelu
 
 def get_accuracy(output, label):
     error = np.minimum(1, np.absolute(output-label))
@@ -10,9 +11,14 @@ def get_accuracy(output, label):
 def print_epoch(epoch, symbol, arguments, state):
     print 'Epoch ' + str(epoch)
 
-def fully_connected(inputs, hidden_size, activation=True):
+def relu(inputs,mode,label=None):
+    if mode == True:
+        return drelu.drelu(label)(data=inputs, name=label)
+    return mx.symbol.Activation(data=inputs, act_type='relu')
+
+def fully_connected(inputs, hidden_size, activation=True,use_drelu=False,activation_label=None):
     if activation:
-        return relu(mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size))
+        return relu(mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size),use_drelu,activation_label)
     else:
         return mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size)
 
@@ -33,7 +39,6 @@ def dropout(inputs, rate):
 def softmax(inputs):
     return mx.symbol.SoftmaxOutput(data=inputs, name='softmax')
 
-def relu(inputs):
-    return mx.symbol.Activation(data=inputs, act_type='relu')
+
 
 
