@@ -1,9 +1,10 @@
 import mxnet as mx
 import numpy as np
+import mxnet_mod as mxm
 from layers import *
 
 #Model build from paper: Neural Networks with Few Multiplications
-def build_mlp(device,num_epoch,optimizer,lr,use_drelu,model_argument):
+def build_mlp(device,num_epoch,optimizer,lr,use_drelu,**kwargs):
     data = mx.symbol.Variable('data')
     if use_drelu:
         fc1 = fully_connected(data, 784, use_drelu=True, activation_label='drelu1')
@@ -23,10 +24,9 @@ def build_mlp(device,num_epoch,optimizer,lr,use_drelu,model_argument):
         symbol=output, 
         ctx=device,
         optimizer=optimizer,
-        initializer=mx.init.Xavier(factor_type='in',magnitude=2.5),
+        initializer=mxm.Custom_Initializer(use_drelu=use_drelu,**kwargs),
         num_epoch=num_epoch,
-        learning_rate=lr,
-        **model_argument)
+        learning_rate=lr)
 
 #Model build from paper: 
 def build_nin(features=None,labels=None,num_train=None,device=mx.cpu(),epoch=100,lr=0.01,optimizer='adam'):
@@ -46,5 +46,10 @@ def build_nin(features=None,labels=None,num_train=None,device=mx.cpu(),epoch=100
     conv3_3 = convLayer(conv3_2, filter_size=(1,1), stride=(1,1), pad=(0,0), filters=10)
     pool3 = avgPoolLayer(conv3_3, filter_size=(8,8), stride=(1,1), pad=(0,0))
     output = softmax(output, name='softmax') 
-    model = mx.model.FeedForward.create(output, X=features,y=labels,num_epoch=epoch,ctx=device,learning_rate=lr,optimizer=optimizer,epoch_end_callback=print_epoch)
+    model = mx.model.FeedForward(
+        symbol=output, 
+        ctx=device,
+        optimizer=optimizer,
+        initializer=mx.init.Xavier(rnd_type=kwargs['rnd_type'],factor_type=kwargs['factor_type'],magnitude=kwargs['magnitude']),
+        num_epoch=epoch,learning_rate=lr,epoch_end_callback=print_epoch)
     return model

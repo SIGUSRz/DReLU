@@ -13,7 +13,7 @@ def print_epoch(epoch, symbol, arguments, state):
 
 def relu(inputs,mode,label=None):
     if mode == True:
-        return drelu.drelu(label)(data=inputs, name=label)
+        return drelu.drelu(name=label)(data=inputs,name=label)
     return mx.symbol.Activation(data=inputs, act_type='relu')
 
 def fully_connected(inputs, hidden_size, activation=True,use_drelu=False,activation_label=None):
@@ -38,7 +38,3 @@ def dropout(inputs, rate):
 
 def softmax(inputs):
     return mx.symbol.SoftmaxOutput(data=inputs, name='softmax')
-
-
-
-

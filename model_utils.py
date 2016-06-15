@@ -1,18 +1,17 @@
 import mxnet as mx
 import numpy as np
 from model_zoo import *
-import log
+import mxnet_mod as mxm
 
-def build_model(model_name,device=mx.cpu(),num_epoch=20,batch_size=128,initializer='Xavier',optimizer='sgd',lr=0.01,use_drelu='False'):
-    model_argument = {}
+def build_model(model_name,device=mx.cpu(),num_epoch=20,batch_size=128,optimizer='sgd',lr=0.01,use_drelu='False',**kwargs):
     if model_name  == 'mlp':
-        return build_mlp(device,num_epoch,optimizer,lr,use_drelu,model_argument)
+        return build_mlp(device,num_epoch,optimizer,lr,use_drelu,**kwargs)
     else:
         print 'Not Supported'
         
 def train_model(net, train_data=(None,None),eval_data=(None,None),batch_size=128,batch_callback=None,kv=None,save_model_path=None,top_accuracy=False):
     head = '%(asctime)-15s Node[' + str(kv.rank) + '] %(message)s'
-    logger = log.build_logger(head)
+    logger = mxm.build_logger(head)
     evaluation_matrix = ['accuracy']
     if top_accuracy:
         for top_k in [5,15,20]:

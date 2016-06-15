@@ -1,14 +1,14 @@
 import mxnet as mx
 import numpy as np
-import minpy as mp
 bound_record = {}
 
 class drelu(mx.operator.NumpyOp):
-    def __init__(self, name, implement='python'):
+    def __init__(self,name):
         #inheriting from superclass NumpyOp
+        #Override operator functions defined in mxnet operator.py CustomOp class
         super(drelu,self).__init__(True)
         self.name = name
-        self.implement = implement
+        print name
     
     def list_arguments(self):
         return ['data', 'lower', 'upper']
@@ -17,14 +17,14 @@ class drelu(mx.operator.NumpyOp):
         return ['output']
 
     def infer_shape(self,input_shape):
+        #Return input_shape and output_shape
         return [input_shape[0], (1,), (1,)], [input_shape[0]]
 
     def forward(self, **kwargs):
         inputs = kwargs['in_data']
         outputs = kwargs['out_data']
-        lower_bound, upper_bound = inputs[1],inputs[2]
-        if self.implement == 'python':
-            outputs[0][:] = np.minimum(upper_bound, np.maximum(lower_bound, inputs[0]))
+        lower_bound, upper_bound = inputs[1][0],inputs[2][0]
+        outputs[0][:] = np.minimum(upper_bound, np.maximum(lower_bound, inputs[0]))
 
     def backward(self, **kwargs):
         #inputs: [0] data [1] lower_bound [2] upper_bound
