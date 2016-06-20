@@ -27,6 +27,7 @@ def load_CIFAR10_batch(filename):
 
 def load_CIFAR10(filepath):
     #load Cifar-10 dataset
+    os.chdir('..')
     _load_cifar_data(filepath)
     XList = []
     YList = []
@@ -39,6 +40,7 @@ def load_CIFAR10(filepath):
     train_y = np.concatenate(YList)
     del X, Y
     test_x, test_y = load_CIFAR10_batch(os.path.join(filepath, 'cifar-10-batches-py/test_batch'))
+    os.chdir('minpy')
     return train_x, train_y, test_x, test_y
 
 def _load_mnist_data(data_dir):
@@ -98,14 +100,17 @@ def get_mnist_label(filename):
     labels[1:].dump(filename + '.pkl')
 
 def load_MNIST(filepath):
+    os.chdir('..')
     _load_mnist_data(filepath)
     train_x = pickle.load(open(os.path.join(filepath,'train-images-idx3-ubyte.pkl'),'rb')) 
     train_y = pickle.load(open(os.path.join(filepath,'train-labels-idx1-ubyte.pkl'),'rb'))
     test_x = pickle.load(open(os.path.join(filepath,'t10k-images-idx3-ubyte.pkl'),'rb'))
     test_y = pickle.load(open(os.path.join(filepath,'t10k-labels-idx1-ubyte.pkl'),'rb'))
+    os.chdir('minpy')
     return train_x, train_y, test_x, test_y
 
 def get_MNIST_dataset(data_dir,kv,batch_size,data_shape):
+    os.chdir('..')
     if not os.path.isdir('Datasets'):
         os.system('mkdir Datasets/')
     if not os.path.isdir(data_dir):
@@ -141,4 +146,5 @@ def get_MNIST_dataset(data_dir,kv,batch_size,data_shape):
         flat = flat,
         num_parts = kv.num_workers,
         part_index = kv.rank)
+    os.chdir('minpy')
     return (train, validation)

@@ -47,5 +47,5 @@ class drelu(mx.operator.NumpyOp):
         dout = output_gradient[0]
         dlower_bound = input_gradient[1]
         dupper_bound = input_gradient[2]
-        dlower_bound[:] = np.sum(dout[activations==lower_bound])
-        dupper_bound[:] = np.sum(dout[activations==upper_bound])
+        dlower_bound[:] = np.sum(dout[activations==lower_bound],axis=None)
+        dupper_bound[:] = np.sum(dout[activations==upper_bound],axis=None)
