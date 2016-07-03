@@ -1,8 +1,18 @@
 import minpy.numpy as np
 
-def gaussian_random(hidden_size, weight_range=(0, 0.05), bias_value=0.0):
+def gaussian_random(structure,mode,weight,lower,upper):
     param = []
-    for layer in range(len(hidden_size)-1):
-        param.append(np.random.normal(weight_range[0],weight_range[1],(hidden_size[layer],hidden_size[layer+1])))
-        param.append(np.full(hidden_size[layer+1], bias_value))
-    return param
+    drelu_pos = []
+
+    for layer in range(len(structure) - 1):
+        param.append(np.random.normal(0, weight, (structure[layer],structure[layer+1])))
+        param.append(np.full(structure[layer + 1], 0.0))
+    for layer in range(len(structure) - 2):
+        if mode[layer] == 'drelu':
+            param.append(fixed_bound(structure[layer + 1], lower))
+            param.append(fixed_bound(structure[layer + 1], upper))
+            drelu_pos.append(layer)
+    return param, drelu_pos
+
+def fixed_bound(structure, value):
+    return np.full(structure, value)

@@ -11,7 +11,8 @@ def build_logger(head):
 class Custom_Initializer(mx.initializer.Initializer):
     def __init__(self, **kwargs):
         super(Custom_Initializer,self).__init__()
-        if kwargs['use_drelu']:
+        act_func = kwargs['act_func']
+        if 'drelu' in act_func:
             self.upper_bound = kwargs['upper_bound']
             self.lower_bound = kwargs['lower_bound']
         self.method = kwargs['initializer']

@@ -11,14 +11,15 @@ def get_accuracy(output, label):
 def print_epoch(epoch, symbol, arguments, state):
     print 'Epoch ' + str(epoch)
 
-def relu(inputs,mode,label=None):
-    if mode == True:
+def activate(inputs,mode,number):
+    if mode == 'drelu':
+        label = 'drelu' + str(number)
         return drelu.drelu(name=label)(data=inputs,name=label)
-    return mx.symbol.Activation(data=inputs, act_type='relu')
+    return mx.symbol.Activation(data=inputs, act_type=mode)
 
-def fully_connected(inputs, hidden_size, activation=True,use_drelu=False,activation_label=None):
+def fully_connected(inputs, hidden_size, activation=True,act_func=None,number=None):
     if activation:
-        return relu(mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size),use_drelu,activation_label)
+        return activate(mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size),act_func,number)
     else:
         return mx.symbol.FullyConnected(data=inputs, num_hidden=hidden_size)
 

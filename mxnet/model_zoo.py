@@ -4,27 +4,26 @@ import mxnet_mod as mxm
 from layers import *
 
 #Model build from paper: Neural Networks with Few Multiplications
-def build_mlp(device,num_epoch,optimizer,lr,use_drelu,**kwargs):
+def build_mlp(**kwargs):
     data = mx.symbol.Variable('data')
-    if use_drelu:
-        fc1 = fully_connected(data, 784, use_drelu=True, activation_label='drelu1')
-        fc2 = fully_connected(fc1, 1024, use_drelu=True, activation_label='drelu2')
-        fc3 = fully_connected(fc2, 1024, use_drelu=True, activation_label='drelu3')
-        fc4 = fully_connected(fc3, 1024, use_drelu=True, activation_label='drelu4')
-        fc5 = fully_connected(fc4, 10, activation=False)
-        output = softmax(fc5)
-    else:
-        fc1 = fully_connected(data, 784)
-        fc2 = fully_connected(fc1, 1024)
-        fc3 = fully_connected(fc2, 1024)
-        fc4 = fully_connected(fc3, 1024)
-        fc5 = fully_connected(fc4, 10, activation=False)
-        output = softmax(fc3)
+    device = kwargs['device']
+    num_epoch = kwargs['num_epoch']
+    optimizer = kwargs['optimizer']
+    lr = kwargs['lr']
+    act_func = kwargs['act_func']
+
+    fc1 = fully_connected(data, 784, act_func=act_func[0], number=0)
+    fc2 = fully_connected(fc1, 1024, act_func=act_func[1], number=1)
+    fc3 = fully_connected(fc2, 1024, act_func=act_func[2], number=2)
+    fc4 = fully_connected(fc3, 1024, act_func=act_func[3], number=3)
+    fc5 = fully_connected(fc4, 10, activation=False, number=4)
+    output = softmax(fc5)
+    
     return mx.model.FeedForward(
         symbol=output, 
         ctx=device,
         optimizer=optimizer,
-        initializer=mxm.Custom_Initializer(use_drelu=use_drelu,**kwargs),
+        initializer=mxm.Custom_Initializer(**kwargs),
         num_epoch=num_epoch,
         learning_rate=lr)
 

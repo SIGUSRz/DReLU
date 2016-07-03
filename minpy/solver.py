@@ -1,6 +1,7 @@
 import minpy.numpy as np
 import utils
 import optimizer
+import flags
 
 class Solver:
     def __init__(self, model, data, **kwargs):
@@ -13,7 +14,7 @@ class Solver:
         self.optimizer = kwargs.pop('optimizer', 'sgd')
         self.update_setting = kwargs.pop('update_setting', None)
 
-    def train(self):
+    def train(self): 
         x_train = self.data[0]
         y_train = self.data[1]
         x_val = self.data[2]
@@ -21,24 +22,35 @@ class Solver:
         x_test = self.data[4]
         y_test = self.data[5]
         N = x_train.shape[0]
-        print x_train.shape, y_train.shape, x_val.shape, y_val.shape, x_test.shape, y_test.shape
         if not N % self.batch_size == 0:
             print 'Illegal Batch Size'
             return
         num_batch = N // self.batch_size
         optimize = getattr(__import__('optimizer'), self.optimizer)
+
         accuracy_record = [0.0]
+        loss_record = []
         param = []
 
         for epoch in range(self.epochs):
+            #gradient_record = {}
+            flags.EPOCH = epoch
             for batch in range(num_batch):
                 data = x_train[batch * self.batch_size:(batch+1) * self.batch_size]
                 label = y_train[batch * self.batch_size:(batch+1) * self.batch_size]
+                if batch % self.batch_size == 0:
+                    flags.BATCH_END = True
+                else:
+                    flags.BATCH_END = False
                 gradient, loss = self.model.loss(data, label)
                 optimize(self.model.param, gradient, **self.update_setting)
-                if batch % 50 == 0:
+                loss_record.append(loss.asnumpy())
+                #gradient_record['batch%d' % batch] = [p.asnumpy() for p in gradient]
+                if batch % self.batch_size == 0:
                     print 'epoch %d batch %d loss: %f' % (epoch, batch, loss.val)
-            validation_accuracy = utils.accuracy(np.argmax(self.model.loss(x_val),axis=1), y_val)
+            flags.BATCH_END = False
+            #utils.record_gradient(gradient_record)
+            validation_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_val),axis=1), y_val)
             print 'epoch %d validation accuracy: %f' % (epoch, validation_accuracy)
             if validation_accuracy > max(accuracy_record):
                 param = [np.copy(p) for p in self.model.param]
@@ -50,7 +62,7 @@ class Solver:
 
             print 'optimal accuracy: %f' % max(accuracy_record)
             self.model.param = [np.copy(p) for p in param]
-            test_accuracy = utils.accuracy(np.argmax(self.model.loss(x_test), axis=1), y_test)
+            test_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_test), axis=1), y_test)
             print 'test accuracy: %f' % test_accuracy
 
-        return accuracy_record
+        return accuracy_record, loss_record

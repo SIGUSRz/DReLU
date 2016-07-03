@@ -1,4 +1,5 @@
 import minpy.numpy as np
+import utils
 
 def sgd(param, grad, **kwargs):
     for p in range(len(param)):
