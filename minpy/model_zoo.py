@@ -12,8 +12,6 @@ class mlp:
         self.act_mode = kwargs.pop('act_mode', None)
         self.fc_layers = len(self.structure) - 1
         self.context = [mx.gpu(i) for i in range(kwargs['device'])]
-        self.record_activation = kwargs.pop('record_activation', False)
-        self.record_param = kwargs.pop('record_parameters', False)
         self.param, self.drelu_pos = gaussian_random(structure=self.structure,mode=self.act_mode,weight=kwargs['weight_init'],lower=kwargs['lower_bound'],upper=kwargs['upper_bound'])
 
         flags.NAME = 'MLP'
@@ -41,7 +39,7 @@ class mlp:
         ac2 = activate(fc2, self.act_mode[1], lower2, upper2)
         fc3 = fully_connected(ac2, w2, b2)
 
-        if self.record_activation:
+        if flags.RECORD_FLAG:
             activation_records = {
                 'fc1': fc1.asnumpy(), 
                 'ac1': ac1.asnumpy(),
@@ -50,7 +48,7 @@ class mlp:
                 'fc3': fc3.asnumpy()
             }
             utils.record_activation(activation_records)
-        if self.record_param:
+        if flags.RECORD_FLAG:
             parameter_records = {
                 'w0': w0.asnumpy(),
                 'b0': b0.asnumpy(),

@@ -32,15 +32,11 @@ def save_model(model):
     pickle.dump(model, open('Log/Model.pkl', 'wb'))
 
 def record_activation(records):
-    if not flags.BATCH_END:
-        return
     if not os.path.exists('Log'):
         os.system('mkdir Log/')
     pickle.dump(records, open('Log/%s-epoch-%d_activation.pkl' % (flags.NAME, flags.EPOCH),'wb'))
 
 def record_parameter(records):
-    if not flags.BATCH_END:
-        return
     if not os.path.exists('Log'):
         os.system('mkdir Log/')
     pickle.dump(records, open('Log/%s-epoch-%d_parameter.pkl' % (flags.NAME, flags.EPOCH),'wb'))

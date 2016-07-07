@@ -1,4 +1,3 @@
 global EPOCH
-global BATCH_END 
-BATCH_END = False
+global RECORD_FLAG
 global NAME

@@ -35,22 +35,19 @@ class Solver:
         for epoch in range(self.epochs):
             #gradient_record = {}
             flags.EPOCH = epoch
+            flags.RECORD_FLAG = False
             for batch in range(num_batch):
                 data = x_train[batch * self.batch_size:(batch+1) * self.batch_size]
                 label = y_train[batch * self.batch_size:(batch+1) * self.batch_size]
-                if batch % self.batch_size == 0:
-                    flags.BATCH_END = True
-                else:
-                    flags.BATCH_END = False
                 gradient, loss = self.model.loss(data, label)
                 optimize(self.model.param, gradient, **self.update_setting)
                 loss_record.append(loss.asnumpy())
                 #gradient_record['batch%d' % batch] = [p.asnumpy() for p in gradient]
                 if batch % self.batch_size == 0:
                     print 'epoch %d batch %d loss: %f' % (epoch, batch, loss.val)
-            flags.BATCH_END = False
-            #utils.record_gradient(gradient_record)
+            flags.RECORD_FLAG = True 
             validation_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_val),axis=1), y_val)
+            flags.RECORD_FLAG = False
             print 'epoch %d validation accuracy: %f' % (epoch, validation_accuracy)
             if validation_accuracy > max(accuracy_record):
                 param = [np.copy(p) for p in self.model.param]
