@@ -2,12 +2,11 @@ import minpy.numpy as np
 import utils
 
 def sgd(param, grad, **kwargs):
-    for p in range(len(param)):
-        param[p] -= kwargs['learning_rate'] * grad[p]
+    return param - kwargs['learning_rate'] * grad
 
 def momentum(param, grad, **kwargs):
     lr = kwargs['learning_rate']
-    param_index = kwargs['current_index']
     momentum = kwargs['momentum']
     previous = kwargs['previous']
-    
+    previous_param_index = kwargs['current_index']
+    return param - (lr * grad + momentum * previous[previous_param_index])

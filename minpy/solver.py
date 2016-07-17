@@ -35,16 +35,15 @@ class Solver:
         flags.RECORD_FLAG = False
 
         for epoch in range(self.epochs):
-            #gradient_record = {}
             flags.EPOCH = epoch
             flags.MODE = 'Train'
             for batch in range(num_batch):
                 data = x_train[batch * self.batch_size:(batch+1) * self.batch_size]
                 label = y_train[batch * self.batch_size:(batch+1) * self.batch_size]
                 gradient, loss = self.model.loss(data, label)
-                optimize(self.model.param, gradient, **self.update_setting)
+                for p in range(len(self.model.param)):
+                    self.model.param[p] = optimize(self.model.param[p], gradient[p], **self.update_setting)
                 loss_record.append(loss.asnumpy())
-                #gradient_record['batch%d' % batch] = [p.asnumpy() for p in gradient]
                 if batch % self.batch_size == 0:
                     print 'epoch %d batch %d loss: %f' % (epoch, batch, loss.val)
             flags.MODE = 'Test'
