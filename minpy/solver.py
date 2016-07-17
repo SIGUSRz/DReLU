@@ -31,11 +31,13 @@ class Solver:
         accuracy_record = [0.0]
         loss_record = []
         param = []
+        validation_flag = x_val.shape[0] > 0
+        flags.RECORD_FLAG = False
 
         for epoch in range(self.epochs):
             #gradient_record = {}
             flags.EPOCH = epoch
-            flags.RECORD_FLAG = False
+            flags.MODE = 'Train'
             for batch in range(num_batch):
                 data = x_train[batch * self.batch_size:(batch+1) * self.batch_size]
                 label = y_train[batch * self.batch_size:(batch+1) * self.batch_size]
@@ -45,21 +47,29 @@ class Solver:
                 #gradient_record['batch%d' % batch] = [p.asnumpy() for p in gradient]
                 if batch % self.batch_size == 0:
                     print 'epoch %d batch %d loss: %f' % (epoch, batch, loss.val)
-            flags.RECORD_FLAG = True 
-            validation_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_val),axis=1), y_val)
-            flags.RECORD_FLAG = False
-            print 'epoch %d validation accuracy: %f' % (epoch, validation_accuracy)
-            if validation_accuracy > max(accuracy_record):
-                param = [np.copy(p) for p in self.model.param]
-            accuracy_record.append(validation_accuracy)
+            flags.MODE = 'Test'
+            if validation_flag:
+                flags.RECORD_FLAG = True 
+                validation_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_val),axis=1), y_val)
+                print 'validation accuracy: %f' % (validation_accuracy)
+                if validation_accuracy > max(accuracy_record):
+                    param = [np.copy(p) for p in self.model.param]
+                accuracy_record.append(validation_accuracy)
+                self.model.param = [np.copy(p) for p in param]
+                flags.RECORD_FLAG = False
+                test_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_test), axis=1), y_test)
+            else:
+                test_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_test), axis=1), y_test)
+                if test_accuracy > max(accuracy_record):
+                    param = [np.copy(p) for p in self.model.param]
+                accuracy_record.append(test_accuracy)
+                self.model.param = [np.copy(p) for p in param]
+            print 'test accuracy: %f' % test_accuracy
+            print 'optimal accuracy: %f' % max(accuracy_record)
 
             if (epoch + 1) % self.decay_interval == 0:
                 self.update_setting['learning_rate'] *= self.decay_rate
                 print 'learning rate decayed to %f' % self.update_setting['learning_rate']
+        utils.record_loss(loss_record)
 
-            print 'optimal accuracy: %f' % max(accuracy_record)
-            self.model.param = [np.copy(p) for p in param]
-            test_accuracy = utils.get_accuracy(np.argmax(self.model.loss(x_test), axis=1), y_test)
-            print 'test accuracy: %f' % test_accuracy
-
-        return accuracy_record, loss_record
+        return accuracy_record[1:]
